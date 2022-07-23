@@ -18,7 +18,7 @@ type DropBox struct {
 	Timeout time.Duration
 }
 
-func (db *DropBox) GetFiles(ctx context.Context, path string) ([]models.FileData, error) {
+func (db *DropBox) GetFiles(ctx context.Context, path string) ([]models.FileData, string, error) {
 	_, cancel := context.WithCancel(ctx)
 	defer cancel()
 	url := "files/list_folder"
@@ -29,7 +29,7 @@ func (db *DropBox) GetFiles(ctx context.Context, path string) ([]models.FileData
 	data, err := db.client.Post(url, body, nil)
 	if err != nil {
 		log.Error().Err(err).Msgf("cant get files for %s", path)
-		return []models.FileData{}, err
+		return []models.FileData{}, "", err
 	}
 	var response models.DropBoxFileListResponse
 	err = json.Unmarshal(data, &response)
@@ -40,7 +40,7 @@ func (db *DropBox) GetFiles(ctx context.Context, path string) ([]models.FileData
 			Path: item.PathLower,
 		})
 	}
-	return fileNames, err
+	return fileNames, response.Cursor, err
 }
 
 func (db *DropBox) PollForChange(ctx context.Context, cursor string, timeout time.Duration) (bool, error) {
