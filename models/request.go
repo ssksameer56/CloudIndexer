@@ -9,3 +9,7 @@ type DropBoxFileListRequest struct {
 	Path                            string `json:"path,omitempty"`
 	Recursive                       bool   `json:"recursive,omitempty"`
 }
+
+type DropBoxPollRequest struct {
+	Cursor string `json:"cursor,omitempty"`
+}

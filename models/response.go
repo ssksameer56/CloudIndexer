@@ -18,3 +18,7 @@ type DropBoxFileMetadata struct {
 	PathDisplay string `json:"path_display,omitempty"`
 	ID          string `json:"id,omitempty"`
 }
+
+type DropBoxPollResponse struct {
+	Changes bool `json:"changes,omitempty"`
+}
