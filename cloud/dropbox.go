@@ -22,12 +22,11 @@ func (db *DropBox) GetFiles(ctx context.Context, path string) ([]models.FileData
 	_, cancel := context.WithCancel(ctx)
 	defer cancel()
 	url := "files/list_folder"
-	headers := make(map[string]string)
-	headers["Authorization"] = "Bearer " + db.AuthKey
+
 	body := models.DropBoxFileListRequest{
 		Path: path,
 	}
-	data, err := db.client.Post(url, headers, body)
+	data, err := db.client.Post(url, body)
 	if err != nil {
 		log.Error().Err(err).Msgf("cant get files for %s", path)
 		return []models.FileData{}, err
@@ -50,6 +49,8 @@ func (db *DropBox) Connect(ctx context.Context) error {
 		BaseURL: "https://api.dropboxapi.com/2/",
 		Client:  &http.Client{},
 		Timeout: time.Second * 30,
+		Headers: make(map[string]string),
 	}
+	db.client.Headers["Authorization"] = "Bearer " + db.AuthKey
 	return nil
 }

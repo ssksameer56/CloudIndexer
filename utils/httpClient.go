@@ -16,9 +16,10 @@ type HttpClient struct {
 	Client  *http.Client
 	Timeout time.Duration
 	BaseURL string
+	Headers map[string]string
 }
 
-func (hc *HttpClient) Get(reqURL string, headers map[string]string) ([]byte, error) {
+func (hc *HttpClient) Get(reqURL string) ([]byte, error) {
 	var response *http.Response
 	var request http.Request
 	var err error
@@ -28,7 +29,7 @@ func (hc *HttpClient) Get(reqURL string, headers map[string]string) ([]byte, err
 	if err != nil {
 		log.Error().Err(err).Msgf("cant parse URL %s", reqURL)
 	}
-	for name, value := range headers {
+	for name, value := range hc.Headers {
 		request.Header.Add(name, value)
 	}
 	request.Header.Add("Content-Type", "application/json")
@@ -51,7 +52,7 @@ func (hc *HttpClient) Get(reqURL string, headers map[string]string) ([]byte, err
 	return body, nil
 }
 
-func (hc *HttpClient) Post(reqURL string, headers map[string]string, body interface{}) ([]byte, error) {
+func (hc *HttpClient) Post(reqURL string, body interface{}) ([]byte, error) {
 	var response *http.Response
 	var request *http.Request
 	var err error
@@ -72,7 +73,7 @@ func (hc *HttpClient) Post(reqURL string, headers map[string]string, body interf
 		log.Err(err).Msgf("cannot create post request %s", reqURL)
 		return nil, err
 	}
-	for name, value := range headers {
+	for name, value := range hc.Headers {
 		request.Header.Add(name, value)
 	}
 	request.Header.Add("Content-Type", "application/json")
