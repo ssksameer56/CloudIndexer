@@ -13,3 +13,7 @@ type DropBoxFileListRequest struct {
 type DropBoxPollRequest struct {
 	Cursor string `json:"cursor,omitempty"`
 }
+
+type DropBoxDownloadRequest struct {
+	Path string `json:"path,omitempty"`
+}

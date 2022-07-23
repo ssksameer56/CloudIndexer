@@ -30,3 +30,23 @@ func TestGetFiles(t *testing.T) {
 	require.NotEmpty(t, files)
 	require.NotEmpty(t, cursor)
 }
+
+func TestDownload(t *testing.T) {
+	err := config.LoadConfig()
+	if err != nil {
+		log.Err(err).Msg("cant load config")
+		t.FailNow()
+	}
+	dropbox := DropBox{
+		AuthKey: config.Config.DropboxKey,
+		Timeout: time.Minute,
+	}
+	err = dropbox.Connect(context.Background())
+	if err != nil {
+		log.Err(err).Msg("cant load dropbox client")
+		t.FailNow()
+	}
+	files, err := dropbox.DownloadFile(context.Background(), "/CloudIndexer/hello.txt")
+	require.NoError(t, err)
+	require.NotEmpty(t, files)
+}

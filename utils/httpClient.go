@@ -52,7 +52,7 @@ func (hc *HttpClient) Get(reqURL string) ([]byte, error) {
 	return body, nil
 }
 
-func (hc *HttpClient) Post(reqURL string, body interface{}, timeout *time.Duration) ([]byte, error) {
+func (hc *HttpClient) Post(reqURL string, body interface{}, headers map[string]string, timeout *time.Duration) ([]byte, error) {
 	var response *http.Response
 	var request *http.Request
 	var err error
@@ -76,8 +76,9 @@ func (hc *HttpClient) Post(reqURL string, body interface{}, timeout *time.Durati
 	for name, value := range hc.Headers {
 		request.Header.Add(name, value)
 	}
-	request.Header.Add("Content-Type", "application/json")
-
+	for name, value := range headers {
+		request.Header.Add(name, value)
+	}
 	if timeout != nil {
 		hc.Client.Timeout = *timeout
 	}
