@@ -1,6 +1,6 @@
 package models
 
-type SearchResponse struct {
+type APISearchResponse struct {
 	Name string
 	URL  string
 }

@@ -7,6 +7,7 @@ require github.com/rs/zerolog v1.27.0
 require (
 	cloud.google.com/go/compute v1.7.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/elastic/elastic-transport-go/v8 v8.0.0-20211216131617-bbee439d559c // indirect
 	github.com/golang/groupcache v0.0.0-20200121045136-8c9f03a8e57e // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/google/uuid v1.3.0 // indirect
@@ -33,6 +34,7 @@ require (
 )
 
 require (
+	github.com/elastic/go-elasticsearch/v8 v8.3.0
 	github.com/ledongthuc/pdf v0.0.0-20220302134840-0c2507a12d80
 	github.com/mattn/go-colorable v0.1.12 // indirect
 	github.com/mattn/go-isatty v0.0.14 // indirect

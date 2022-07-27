@@ -5,7 +5,7 @@ type FileData struct {
 	Path string
 }
 
-type ElasticSearchData struct {
+type TextStoreModel struct {
 	Name     string `json:"name,omitempty"`
 	FilePath string `json:"file_path,omitempty"`
 	Text     string `json:"text,omitempty"`
