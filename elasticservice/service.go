@@ -30,7 +30,7 @@ func (es *ElasticSearchService) Connect() error {
 	return nil
 }
 
-func (es *ElasticSearchService) Search(ctx context.Context, index, keyword string) ([]models.ESSearchResponse, error) {
+func (es *ElasticSearchService) Search(ctx context.Context, index, keyword string) (models.ESSearchResponse, error) {
 	cctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 	req := models.SearchRequest{
@@ -48,24 +48,20 @@ func (es *ElasticSearchService) Search(ctx context.Context, index, keyword strin
 	)
 	if err != nil {
 		log.Err(err).Msg("couldnt search to ES")
-		return []models.ESSearchResponse{}, err
+		return models.ESSearchResponse{}, err
 	}
 	defer res.Body.Close()
 	resBody, err := ioutil.ReadAll(res.Body)
 
 	if res.StatusCode != http.StatusOK {
 		log.Err(err).Msg("couldnt get success response from ES")
-		return []models.ESSearchResponse{}, err
+		return models.ESSearchResponse{}, err
 	}
-	var ESResults []models.ESSearchResponse
-	if err != nil {
-		log.Err(err).Msg("couldnt read response body")
-		return []models.ESSearchResponse{}, err
-	}
+	var ESResults models.ESSearchResponse
 	err = json.Unmarshal(resBody, &ESResults)
 	if err != nil {
 		log.Err(err).Msg("couldnt unmarshal res body")
-		return []models.ESSearchResponse{}, err
+		return models.ESSearchResponse{}, err
 	}
 	return ESResults, nil
 }
@@ -88,7 +84,7 @@ func (es *ElasticSearchService) Index(ctx context.Context, index string, data mo
 	defer res.Body.Close()
 	resBody, err := ioutil.ReadAll(res.Body)
 
-	if res.StatusCode != http.StatusOK {
+	if res.StatusCode != http.StatusCreated {
 		log.Err(err).Msg("couldnt get success response from ES")
 		return models.ESIndexResponse{}, err
 	}

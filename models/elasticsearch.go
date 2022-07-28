@@ -29,12 +29,13 @@ type ESSearchResponse struct {
 }
 
 type SearchHit struct {
-	Score   float64 `json:"_score"`
-	Index   string  `json:"_index"`
-	Type    string  `json:"_type"`
+	Score   float64 `json:"_score,omitempty"`
+	Index   string  `json:"_index,omitempty"`
+	Type    string  `json:"_type,omitempty"`
+	Id      string  `json:"_id,omitempty"`
 	Version int64   `json:"_version,omitempty"`
 
-	Source TextStoreModel `json:"_source"` // the struct containing your data
+	Source TextStoreModel `json:"_source,omitempty"` // the struct containing your data
 }
 
 type Match struct {
