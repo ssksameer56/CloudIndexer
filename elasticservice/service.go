@@ -54,13 +54,13 @@ func (es *ElasticSearchService) Search(ctx context.Context, index, keyword strin
 	resBody, err := ioutil.ReadAll(res.Body)
 
 	if res.StatusCode != http.StatusOK {
-		log.Err(err).Msg("couldnt get success response from ES")
+		log.Err(err).Str("component", "ElasticSearch").Msg("couldnt get success response from ES")
 		return models.ESSearchResponse{}, err
 	}
 	var ESResults models.ESSearchResponse
 	err = json.Unmarshal(resBody, &ESResults)
 	if err != nil {
-		log.Err(err).Msg("couldnt unmarshal res body")
+		log.Err(err).Str("component", "ElasticSearch").Msg("couldnt unmarshal res body")
 		return models.ESSearchResponse{}, err
 	}
 	return ESResults, nil
@@ -78,24 +78,24 @@ func (es *ElasticSearchService) Index(ctx context.Context, index string, data mo
 	}
 	res, err := req.Do(cctx, es.Conn)
 	if err != nil {
-		log.Err(err).Msg("couldnt index to ES")
+		log.Err(err).Str("component", "ElasticSearch").Msg("couldnt index to ES")
 		return models.ESIndexResponse{}, err
 	}
 	defer res.Body.Close()
 	resBody, err := ioutil.ReadAll(res.Body)
 
 	if res.StatusCode != http.StatusCreated {
-		log.Err(err).Msg("couldnt get success response from ES")
+		log.Err(err).Str("component", "ElasticSearch").Msg("couldnt get success response from ES")
 		return models.ESIndexResponse{}, err
 	}
 	var ESResults models.ESIndexResponse
 	if err != nil {
-		log.Err(err).Msg("couldnt read response body")
+		log.Err(err).Str("component", "ElasticSearch").Msg("couldnt read response body")
 		return models.ESIndexResponse{}, err
 	}
 	err = json.Unmarshal(resBody, &ESResults)
 	if err != nil {
-		log.Err(err).Msg("couldnt unmarshal res body")
+		log.Err(err).Str("component", "ElasticSearch").Msg("couldnt unmarshal res body")
 		return models.ESIndexResponse{}, err
 	}
 	return ESResults, nil

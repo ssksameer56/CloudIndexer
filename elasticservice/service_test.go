@@ -23,7 +23,7 @@ func (ets *ElasticSearchTestSuite) SetupTest() {
 	ets.Service = ElasticSearchService{}
 	err := ets.Service.Connect()
 	if err != nil {
-		log.Err(err).Msg("couldnt establish connection to ES")
+		log.Err(err).Str("component", "ElasticSearch").Msg("couldnt establish connection to ES")
 	}
 }
 

@@ -34,7 +34,7 @@ func TestGetFiles(t *testing.T) {
 func TestDownload(t *testing.T) {
 	err := config.LoadConfig()
 	if err != nil {
-		log.Err(err).Msg("cant load config")
+		log.Err(err).Str("component", "Dropbox Test").Msg("cant load config")
 		t.FailNow()
 	}
 	dropbox := DropBox{
@@ -43,10 +43,30 @@ func TestDownload(t *testing.T) {
 	}
 	err = dropbox.Connect(context.Background())
 	if err != nil {
-		log.Err(err).Msg("cant load dropbox client")
+		log.Err(err).Str("component", "Dropbox Test").Msg("cant load dropbox client")
 		t.FailNow()
 	}
 	files, err := dropbox.DownloadFile(context.Background(), "/CloudIndexer/hello.txt")
+	require.NoError(t, err)
+	require.NotEmpty(t, files)
+}
+
+func TestCursor(t *testing.T) {
+	err := config.LoadConfig()
+	if err != nil {
+		log.Err(err).Str("component", "Dropbox Test").Msg("cant load config")
+		t.FailNow()
+	}
+	dropbox := DropBox{
+		AuthKey: config.Config.DropboxKey,
+		Timeout: time.Minute,
+	}
+	err = dropbox.Connect(context.Background())
+	if err != nil {
+		log.Err(err).Str("component", "Dropbox Test").Msg("cant load dropbox client")
+		t.FailNow()
+	}
+	files, err := dropbox.GetPointerToPath(context.Background(), "/CloudIndexer")
 	require.NoError(t, err)
 	require.NotEmpty(t, files)
 }

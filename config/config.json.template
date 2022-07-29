@@ -1,5 +1,6 @@
 {
     "DROPBOX_API_KEY":"",
     "ELASTICSEARCH_URL":"",
-    "INDEX_NAME":""
+    "INDEX_NAME":"",
+    "BUFFER_SIZE":0
 }

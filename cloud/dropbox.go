@@ -45,7 +45,8 @@ func (db *DropBox) GetFiles(ctx context.Context, path string) ([]models.FileData
 	return fileNames, response.Cursor, err
 }
 
-func (db *DropBox) PollForChange(ctx context.Context, cursor string, timeout time.Duration) (bool, error) {
+func (db *DropBox) CheckForChange(ctx context.Context, cursor string, timeout time.Duration,
+	notifcationChannel chan<- bool) {
 	_, cancel := context.WithCancel(ctx)
 	defer cancel()
 	url := "https://notify.dropboxapi.com/2/files/list_folder/longpoll"
@@ -56,16 +57,18 @@ func (db *DropBox) PollForChange(ctx context.Context, cursor string, timeout tim
 	headers["Content-Type"] = "application/json"
 	data, err := db.client.Post(url, body, headers, &timeout)
 	if err != nil {
-		log.Error().Err(err).Msgf("cant poll for %s", cursor)
-		return false, err
+		log.Error().Err(err).Str("component", "Dropbox").Msgf("cant poll for %s", cursor)
+		notifcationChannel <- false
+		return
 	}
 	var response models.DropBoxPollResponse
 	err = json.Unmarshal(data, &response)
 	if err != nil {
-		log.Error().Err(err).Msgf("cant unmarshal result from api call for %s", cursor)
-		return false, err
+		log.Error().Err(err).Str("component", "Dropbox").Msgf("cant unmarshal result from api call for %s", cursor)
+		notifcationChannel <- false
+		return
 	}
-	return response.Changes, nil
+	notifcationChannel <- true
 }
 
 func (db *DropBox) DownloadFile(ctx context.Context, filePath string) ([]byte, error) {
@@ -82,10 +85,34 @@ func (db *DropBox) DownloadFile(ctx context.Context, filePath string) ([]byte, e
 
 	data, err := db.client.Post(url, body, headers, nil)
 	if err != nil {
-		log.Error().Err(err).Msgf("cant download for %s", filePath)
+		log.Error().Err(err).Str("component", "Dropbox").Msgf("cant download for %s", filePath)
 		return []byte{}, err
 	}
 	return data, nil
+}
+
+func (db *DropBox) GetPointerToPath(ctx context.Context, path string) (string, error) {
+	_, cancel := context.WithCancel(ctx)
+	defer cancel()
+	url := "https://api.dropboxapi.com/2/files/list_folder/get_latest_cursor"
+	body := models.DropboxCursorRequest{
+		Path: path,
+	}
+
+	headers := make(map[string]string)
+	headers["Content-Type"] = "application/json"
+	data, err := db.client.Post(url, body, headers, nil)
+	if err != nil {
+		log.Error().Err(err).Str("component", "Dropbox").Msgf("cant get cursor for %s", path)
+		return "", err
+	}
+	var response models.DropBoxCursorResponse
+	err = json.Unmarshal(data, &response)
+	if err != nil {
+		log.Error().Err(err).Str("component", "Dropbox").Msgf("cant unmarshal result from api call for %s", path)
+		return "", nil
+	}
+	return response.Cursor, nil
 }
 
 func (db *DropBox) Connect(ctx context.Context) error {
