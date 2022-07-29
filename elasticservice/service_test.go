@@ -29,9 +29,9 @@ func (ets *ElasticSearchTestSuite) SetupTest() {
 
 func (ets *ElasticSearchTestSuite) TestIndex() {
 	data := models.TextStoreModel{
-		Name:     "test file",
-		FilePath: "some/weird/stuff/",
-		Text:     "Quick brown fox jumps over the lazy dog",
+		Name:     "test file 2",
+		FilePath: "some/weird/dwdw/",
+		Text:     "Quick brown fox jumps over the lazy dogd dwdw",
 	}
 	res, err := ets.Service.Index(context.Background(), "cloud-indexer", data)
 	require.NoError(ets.T(), err, "error while indexing data to es")

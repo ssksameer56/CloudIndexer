@@ -17,3 +17,7 @@ docker run \
        -e "xpack.security.enabled=false" docker.elastic.co/elasticsearch/elasticsearch:5.6.3
 ```
 https://stackoverflow.com/questions/47035056/how-to-disable-security-username-password-on-elasticsearch-docker-container
+
+# Dropbox
+- Docker provides Access Tokens in case you dont want to implement a OAuth2 Flow
+- These tokens are short lived. They are prefixed with `sl` and valid for 4 hours.

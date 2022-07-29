@@ -12,6 +12,7 @@ type TextStoreModel struct {
 }
 
 type CloudWatcherNotification struct {
-	Cursor string `json:"cursor,omitempty"`
-	Folder string `json:"file_path,omitempty"`
+	Cursor string           `json:"cursor,omitempty"`
+	Folder string           `json:"file_path,omitempty"` //TODO: use Folder for indexing
+	Data   []TextStoreModel `json:"data,omitempty"`
 }

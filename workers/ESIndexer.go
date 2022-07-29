@@ -2,6 +2,7 @@ package workers
 
 import (
 	"context"
+	"errors"
 	"sync"
 	"time"
 
@@ -17,29 +18,41 @@ type ESWorker struct {
 	IndexerNotificationChannel chan models.CloudWatcherNotification
 }
 
-func (cw *ESWorker) Init(ctx context.Context) error {
-	cw.Service = elasticservice.ElasticSearchService{}
-	err := cw.Service.Connect()
+func (esw *ESWorker) Init(ctx context.Context) error {
+	esw.Service = elasticservice.ElasticSearchService{}
+	err := esw.Service.Connect()
 	if err != nil {
 		log.Err(err).Str("component", "ElasticSearchIndexer").Msg("couldnt establish connection to ES")
 		return err
 	}
 	return nil
 }
-func (cw *ESWorker) Run(wg *sync.WaitGroup) {
+func (esw *ESWorker) Run(wg *sync.WaitGroup) {
 	defer wg.Done()
 	ticker := time.NewTicker(time.Minute * 10)
 	select {
-	case <-cw.Context.Done():
+	case <-esw.Context.Done():
 		log.Info().Str("component", "ElasticSearchIndexer").Msg("context done received. exiting es indexer loop")
 	case <-ticker.C:
 		log.Info().Str("component", "ElasticSearchIndexer").Msg("pinging. es indexer alive")
-	case data := <-cw.IndexerNotificationChannel:
+	case data := <-esw.IndexerNotificationChannel:
+		for _, item := range data.Data {
+			go func(item models.TextStoreModel) {
+				res, err := esw.Service.Index(esw.Context, data.Folder, item)
+				if err != nil {
+					log.Err(err).Str("component", "ElasticSearchIndexer").Msgf("couldnt index data %s", item.FilePath)
+				}
+				if res.Result != models.ESIndexCreated || res.Result != models.ESIndexUpdated {
+					log.Err(errors.New("couldnt created")).Str("component", "ElasticSearchIndexer").
+						Msgf("couldnt index data %s", item.FilePath)
+				}
+			}(item)
 
+		}
 	}
 
 }
 
-func (cw *ESWorker) Stop() error {
+func (esw *ESWorker) Stop() error {
 	return nil
 }

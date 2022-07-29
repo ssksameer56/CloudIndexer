@@ -42,13 +42,29 @@ func (cw *CloudWatcher) Run(wg *sync.WaitGroup) {
 	case <-ticker.C:
 		log.Info().Str("component", "CloudWatcher").Msg("pinging. cloud watcher alive")
 	case <-cw.ChangeNotificationChannel:
-		cursor, err := cw.CloudProvider.GetPointerToPath(cw.Context, cw.FolderToWatch)
+		//TODO: update stuff to download files while call is made for folder
+		fileList, cursor, err := cw.CloudProvider.GetFiles(cw.Context, cw.FolderToWatch)
+		newData := make([]models.TextStoreModel, len(fileList))
+		for i, file := range fileList {
+			go func(i int, file models.FileData) {
+				data, err := cw.CloudProvider.DownloadFile(cw.Context, file.Path)
+				if err != nil {
+					log.Err(err).Msgf("error when downloading %s", file.Path)
+				}
+				newData[i] = models.TextStoreModel{
+					Name:     file.Name,
+					FilePath: file.Path,
+					Text:     string(data),
+				}
+			}(i, file)
+		}
 		if err != nil {
 			log.Err(err).Str("component", "CloudWatcher").Msg("couldnt get latest cursor")
 		}
 		notif := models.CloudWatcherNotification{
 			Folder: cw.FolderToWatch,
 			Cursor: cursor,
+			Data:   newData,
 		}
 		cw.CurrentPosition = cursor
 		cw.IndexerNotificationChannel <- notif
