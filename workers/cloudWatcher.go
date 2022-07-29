@@ -39,6 +39,7 @@ func (cw *CloudWatcher) Run(wg *sync.WaitGroup) {
 	select {
 	case <-cw.Context.Done():
 		log.Info().Str("component", "CloudWatcher").Msg("context done received. exiting cloud watcher loop")
+		close(cw.IndexerNotificationChannel)
 	case <-ticker.C:
 		log.Info().Str("component", "CloudWatcher").Msg("pinging. cloud watcher alive")
 	case <-cw.ChangeNotificationChannel:
@@ -76,6 +77,7 @@ func (cw *CloudWatcher) WaitForNotifcation() {
 	select {
 	case <-cw.Context.Done():
 		log.Info().Str("component", "CloudWatcher").Msg("wait for notification ended")
+		close(cw.ChangeNotificationChannel)
 		return
 	default:
 		cw.CloudProvider.CheckForChange(cw.Context, cw.CurrentPosition, time.Hour, cw.ChangeNotificationChannel)

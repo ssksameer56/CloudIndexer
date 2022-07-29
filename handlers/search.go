@@ -24,7 +24,9 @@ func (sh *SearchHandler) SearchText(ctx context.Context, index, keyword string) 
 	}
 	var files []models.TextStoreModel
 	for _, res := range results.Hits.Hits {
-		file := res.Source
+		file := models.TextStoreModel{}
+		file.FilePath = res.Source.FilePath
+		file.Name = res.Source.Name
 		files = append(files, file)
 	}
 	return files, nil

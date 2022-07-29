@@ -45,6 +45,7 @@ func (db *DropBox) GetFiles(ctx context.Context, path string) ([]models.FileData
 	return fileNames, response.Cursor, err
 }
 
+//TODO : test for poll change if its working
 func (db *DropBox) CheckForChange(ctx context.Context, cursor string, timeout time.Duration,
 	notifcationChannel chan<- bool) {
 	_, cancel := context.WithCancel(ctx)

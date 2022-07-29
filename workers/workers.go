@@ -10,3 +10,5 @@ type Worker interface {
 	Run(wg *sync.WaitGroup)
 	Stop() error
 }
+
+//TODO : workers loop write to call from main.go
