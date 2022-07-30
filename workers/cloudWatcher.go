@@ -13,29 +13,27 @@ import (
 
 type CloudWatcher struct {
 	CloudProvider              cloud.Cloud
-	AuthCode                   string
-	Context                    context.Context
-	ChangeNotificationChannel  chan bool
+	context                    context.Context
+	changeNotificationChannel  chan bool
 	FolderToWatch              string
-	CurrentPosition            string
+	currentPosition            string
 	IndexerNotificationChannel chan models.CloudWatcherNotification
 }
 
 func (cw *CloudWatcher) Init(ctx context.Context) error {
-	cw.Context = ctx
-	err := cw.CloudProvider.Connect(cw.Context)
+	cw.context = ctx
+	err := cw.CloudProvider.Connect(cw.context)
 	if err != nil {
 		log.Err(err).Msg("couldnt start cloud watcher")
 		return err
 	}
-	cw.ChangeNotificationChannel = make(chan bool, config.Config.BufferSize)
-	cw.IndexerNotificationChannel = make(chan models.CloudWatcherNotification, config.Config.BufferSize)
-	cursor, err := cw.CloudProvider.GetPointerToPath(cw.Context, cw.FolderToWatch)
+	cw.changeNotificationChannel = make(chan bool, config.Config.BufferSize)
+	cursor, err := cw.CloudProvider.GetPointerToPath(cw.context, cw.FolderToWatch)
 	if err != nil {
 		log.Err(err).Msg("couldnt get pointer to folder to watch")
 		return err
 	}
-	cw.CurrentPosition = cursor
+	cw.currentPosition = cursor
 	return nil
 }
 func (cw *CloudWatcher) Run(wg *sync.WaitGroup) {
@@ -43,18 +41,18 @@ func (cw *CloudWatcher) Run(wg *sync.WaitGroup) {
 	defer wg.Done()
 	ticker := time.NewTicker(time.Minute * 10)
 	select {
-	case <-cw.Context.Done():
+	case <-cw.context.Done():
 		log.Info().Str("component", "CloudWatcher").Msg("context done received. exiting cloud watcher loop")
 		close(cw.IndexerNotificationChannel)
 	case <-ticker.C:
 		log.Info().Str("component", "CloudWatcher").Msg("pinging. cloud watcher alive")
-	case <-cw.ChangeNotificationChannel:
+	case <-cw.changeNotificationChannel:
 		//TODO: update stuff to download files while call is made for folder
-		fileList, cursor, err := cw.CloudProvider.GetFiles(cw.Context, cw.FolderToWatch)
+		fileList, cursor, err := cw.CloudProvider.GetListofFiles(cw.context, cw.FolderToWatch)
 		newData := make([]models.TextStoreModel, len(fileList))
 		for i, file := range fileList {
 			go func(i int, file models.FileData) {
-				data, err := cw.CloudProvider.DownloadFile(cw.Context, file.Path)
+				data, err := cw.CloudProvider.DownloadFile(cw.context, file.Path)
 				if err != nil {
 					log.Err(err).Msgf("error when downloading %s", file.Path)
 				}
@@ -73,7 +71,7 @@ func (cw *CloudWatcher) Run(wg *sync.WaitGroup) {
 			Cursor: cursor,
 			Data:   newData,
 		}
-		cw.CurrentPosition = cursor
+		cw.currentPosition = cursor
 		cw.IndexerNotificationChannel <- notif
 	}
 
@@ -81,12 +79,12 @@ func (cw *CloudWatcher) Run(wg *sync.WaitGroup) {
 
 func (cw *CloudWatcher) WaitForNotifcation() {
 	select {
-	case <-cw.Context.Done():
+	case <-cw.context.Done():
 		log.Info().Str("component", "CloudWatcher").Msg("wait for notification ended")
-		close(cw.ChangeNotificationChannel)
+		close(cw.changeNotificationChannel)
 		return
 	default:
-		cw.CloudProvider.CheckForChange(cw.Context, cw.CurrentPosition, time.Hour, cw.ChangeNotificationChannel)
+		cw.CloudProvider.CheckForChange(cw.context, cw.currentPosition, time.Hour, cw.changeNotificationChannel)
 	}
 }
 

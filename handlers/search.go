@@ -10,7 +10,7 @@ import (
 )
 
 type SearchHandler struct {
-	Service         cloud.Cloud
+	CloudProvider   cloud.Cloud
 	ESSearchService elasticservice.ElasticSearchService
 }
 

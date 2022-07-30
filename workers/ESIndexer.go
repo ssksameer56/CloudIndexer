@@ -13,8 +13,7 @@ import (
 
 type ESWorker struct {
 	Service                    elasticservice.ElasticSearchService
-	AuthCode                   string
-	Context                    context.Context
+	context                    context.Context
 	IndexerNotificationChannel chan models.CloudWatcherNotification
 }
 
@@ -31,14 +30,14 @@ func (esw *ESWorker) Run(wg *sync.WaitGroup) {
 	defer wg.Done()
 	ticker := time.NewTicker(time.Minute * 10)
 	select {
-	case <-esw.Context.Done():
+	case <-esw.context.Done():
 		log.Info().Str("component", "ElasticSearchIndexer").Msg("context done received. exiting es indexer loop")
 	case <-ticker.C:
 		log.Info().Str("component", "ElasticSearchIndexer").Msg("pinging. es indexer alive")
 	case data := <-esw.IndexerNotificationChannel:
 		for _, item := range data.Data {
 			go func(item models.TextStoreModel) {
-				res, err := esw.Service.Index(esw.Context, data.Folder, item)
+				res, err := esw.Service.Index(esw.context, data.Folder, item)
 				if err != nil {
 					log.Err(err).Str("component", "ElasticSearchIndexer").Msgf("couldnt index data %s", item.FilePath)
 				}

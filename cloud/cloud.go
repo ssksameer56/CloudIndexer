@@ -8,9 +8,9 @@ import (
 )
 
 type Cloud interface {
-	GetFiles(ctx context.Context, name string) ([]models.FileData, string, error)
+	GetListofFiles(ctx context.Context, name string) ([]models.FileData, string, error)
 	Connect(ctx context.Context) error
-	CheckForChange(ctx context.Context, cursor string, timeout time.Duration, notifcationChannel <-chan bool)
+	CheckForChange(ctx context.Context, cursor string, timeout time.Duration, notifcationChannel chan bool)
 	GetPointerToPath(ctx context.Context, path string) (string, error)
 	DownloadFile(ctx context.Context, filePath string) ([]byte, error)
 }

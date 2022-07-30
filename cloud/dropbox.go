@@ -48,7 +48,7 @@ func (db *DropBox) GetListofFiles(ctx context.Context, folderName string) ([]mod
 //TODO : test for poll change if its working
 //cursors are unique hashes that point to a folder genereated by dropbox
 func (db *DropBox) CheckForChange(ctx context.Context, cursor string, timeout time.Duration,
-	notifcationChannel chan<- bool) {
+	notifcationChannel chan bool) {
 	_, cancel := context.WithCancel(ctx)
 	defer cancel()
 	url := "https://notify.dropboxapi.com/2/files/list_folder/longpoll"
