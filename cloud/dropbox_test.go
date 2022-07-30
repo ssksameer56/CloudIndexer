@@ -25,7 +25,7 @@ func TestGetFiles(t *testing.T) {
 		log.Err(err).Msg("cant load dropbox client")
 		t.FailNow()
 	}
-	files, cursor, err := dropbox.GetFiles(context.Background(), "/CloudIndexer")
+	files, cursor, err := dropbox.GetListofFiles(context.Background(), "/CloudIndexer")
 	require.NoError(t, err)
 	require.NotEmpty(t, files)
 	require.NotEmpty(t, cursor)

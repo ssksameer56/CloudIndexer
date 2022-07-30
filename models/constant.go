@@ -4,3 +4,4 @@ package models
 var ESStoreKey = "%s/%s/%s"
 var ESIndexCreated = "created"
 var ESIndexUpdated = "updated"
+var TraceID = "trace-id"

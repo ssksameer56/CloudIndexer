@@ -30,6 +30,12 @@ func (cw *CloudWatcher) Init(ctx context.Context) error {
 	}
 	cw.ChangeNotificationChannel = make(chan bool, config.Config.BufferSize)
 	cw.IndexerNotificationChannel = make(chan models.CloudWatcherNotification, config.Config.BufferSize)
+	cursor, err := cw.CloudProvider.GetPointerToPath(cw.Context, cw.FolderToWatch)
+	if err != nil {
+		log.Err(err).Msg("couldnt get pointer to folder to watch")
+		return err
+	}
+	cw.CurrentPosition = cursor
 	return nil
 }
 func (cw *CloudWatcher) Run(wg *sync.WaitGroup) {
