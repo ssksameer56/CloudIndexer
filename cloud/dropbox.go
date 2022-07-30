@@ -18,19 +18,19 @@ type DropBox struct {
 	Timeout time.Duration
 }
 
-func (db *DropBox) GetFiles(ctx context.Context, path string) ([]models.FileData, string, error) {
+func (db *DropBox) GetListofFiles(ctx context.Context, folderName string) ([]models.FileData, string, error) {
 	_, cancel := context.WithCancel(ctx)
 	defer cancel()
 	url := "https://api.dropboxapi.com/2/files/list_folder"
 
 	body := models.DropBoxFileListRequest{
-		Path: path,
+		Path: folderName,
 	}
 	headers := make(map[string]string)
 	headers["Content-Type"] = "application/json"
 	data, err := db.client.Post(url, body, headers, nil)
 	if err != nil {
-		log.Error().Err(err).Msgf("cant get files for %s", path)
+		log.Error().Err(err).Msgf("cant get files for %s", folderName)
 		return []models.FileData{}, "", err
 	}
 	var response models.DropBoxFileListResponse
@@ -46,6 +46,7 @@ func (db *DropBox) GetFiles(ctx context.Context, path string) ([]models.FileData
 }
 
 //TODO : test for poll change if its working
+//cursors are unique hashes that point to a folder genereated by dropbox
 func (db *DropBox) CheckForChange(ctx context.Context, cursor string, timeout time.Duration,
 	notifcationChannel chan<- bool) {
 	_, cancel := context.WithCancel(ctx)
@@ -59,14 +60,12 @@ func (db *DropBox) CheckForChange(ctx context.Context, cursor string, timeout ti
 	data, err := db.client.Post(url, body, headers, &timeout)
 	if err != nil {
 		log.Error().Err(err).Str("component", "Dropbox").Msgf("cant poll for %s", cursor)
-		notifcationChannel <- false
 		return
 	}
 	var response models.DropBoxPollResponse
 	err = json.Unmarshal(data, &response)
 	if err != nil {
 		log.Error().Err(err).Str("component", "Dropbox").Msgf("cant unmarshal result from api call for %s", cursor)
-		notifcationChannel <- false
 		return
 	}
 	notifcationChannel <- true
@@ -92,6 +91,7 @@ func (db *DropBox) DownloadFile(ctx context.Context, filePath string) ([]byte, e
 	return data, nil
 }
 
+//Get only cursor
 func (db *DropBox) GetPointerToPath(ctx context.Context, path string) (string, error) {
 	_, cancel := context.WithCancel(ctx)
 	defer cancel()
