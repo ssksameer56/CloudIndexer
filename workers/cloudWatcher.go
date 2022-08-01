@@ -41,8 +41,10 @@ func (cw *CloudWatcher) Init(ctx context.Context) error {
 	return nil
 }
 func (cw *CloudWatcher) Run(wg *sync.WaitGroup) {
+	wnotifs := sync.WaitGroup{}
 	for name := range cw.currentPositions {
-		go cw.WaitForNotifcation(name)
+		wnotifs.Add(1)
+		go cw.WaitForNotifcation(&wnotifs, name)
 	}
 
 	defer wg.Done()
@@ -82,10 +84,11 @@ func (cw *CloudWatcher) Run(wg *sync.WaitGroup) {
 			cw.IndexerNotificationChannel <- notif
 		}
 	}
-
+	wnotifs.Wait()
 }
 
-func (cw *CloudWatcher) WaitForNotifcation(folder string) {
+func (cw *CloudWatcher) WaitForNotifcation(wg *sync.WaitGroup, folder string) {
+	defer wg.Done()
 	select {
 	case <-cw.context.Done():
 		log.Info().Str("component", "CloudWatcher").Msg("wait for notification ended")
