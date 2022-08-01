@@ -48,7 +48,7 @@ func (db *DropBox) GetListofFiles(ctx context.Context, folderName string) ([]mod
 //TODO : test for poll change if its working
 //cursors are unique hashes that point to a folder genereated by dropbox
 func (db *DropBox) CheckForChange(ctx context.Context, cursor string, timeout time.Duration,
-	notifcationChannel chan bool) {
+	notifcationChannel chan models.FolderChangeNotification, folder string) {
 	_, cancel := context.WithCancel(ctx)
 	defer cancel()
 	url := "https://notify.dropboxapi.com/2/files/list_folder/longpoll"
@@ -68,7 +68,10 @@ func (db *DropBox) CheckForChange(ctx context.Context, cursor string, timeout ti
 		log.Error().Err(err).Str("component", "Dropbox").Msgf("cant unmarshal result from api call for %s", cursor)
 		return
 	}
-	notifcationChannel <- true
+	notifcationChannel <- models.FolderChangeNotification{
+		Folder: folder, //TODO : folder add
+		Change: true,
+	}
 }
 
 func (db *DropBox) DownloadFile(ctx context.Context, filePath string) ([]byte, error) {

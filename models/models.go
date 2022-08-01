@@ -16,3 +16,8 @@ type CloudWatcherNotification struct {
 	Folder string           `json:"file_path,omitempty"` //TODO: use Folder for indexing
 	Data   []TextStoreModel `json:"data,omitempty"`
 }
+
+type FolderChangeNotification struct {
+	Change bool   `json:"change,omitempty"`
+	Folder string `json:"folder,omitempty"`
+}

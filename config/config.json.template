@@ -2,5 +2,6 @@
     "DROPBOX_API_KEY":"",
     "ELASTICSEARCH_URL":"",
     "INDEX_NAME":"",
-    "BUFFER_SIZE":0
+    "BUFFER_SIZE":0,
+    "FOLDERS_TO_WATCH":""
 }
