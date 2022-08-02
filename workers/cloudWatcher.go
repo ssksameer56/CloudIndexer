@@ -41,18 +41,20 @@ func (cw *CloudWatcher) Init(ctx context.Context) error {
 	return nil
 }
 func (cw *CloudWatcher) Run(wg *sync.WaitGroup) {
+	defer wg.Done()
+
 	wnotifs := sync.WaitGroup{}
 	for name := range cw.currentPositions {
 		wnotifs.Add(1)
 		go cw.WaitForNotifcation(&wnotifs, name)
 	}
 
-	defer wg.Done()
 	ticker := time.NewTicker(time.Minute * 10)
 	select {
 	case <-cw.context.Done():
 		log.Info().Str("component", "CloudWatcher").Msg("context done received. exiting cloud watcher loop")
 		close(cw.IndexerNotificationChannel)
+		return
 	case <-ticker.C:
 		log.Info().Str("component", "CloudWatcher").Msg("pinging. cloud watcher alive")
 	case changeNotif := <-cw.changeNotificationChannel:
@@ -95,7 +97,7 @@ func (cw *CloudWatcher) WaitForNotifcation(wg *sync.WaitGroup, folder string) {
 		close(cw.changeNotificationChannel)
 		return
 	default:
-		cw.CloudProvider.CheckForChange(cw.context, cw.currentPositions[folder], time.Hour,
+		cw.CloudProvider.CheckForChange(cw.context, cw.currentPositions[folder], time.Minute*15,
 			cw.changeNotificationChannel, folder)
 	}
 }

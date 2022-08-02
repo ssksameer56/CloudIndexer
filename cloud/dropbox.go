@@ -28,6 +28,7 @@ func (db *DropBox) GetListofFiles(ctx context.Context, folderName string) ([]mod
 	}
 	headers := make(map[string]string)
 	headers["Content-Type"] = "application/json"
+	headers["Authorization"] = "Bearer " + db.AuthKey
 	data, err := db.client.Post(url, body, headers, nil)
 	if err != nil {
 		log.Error().Err(err).Msgf("cant get files for %s", folderName)
@@ -57,6 +58,7 @@ func (db *DropBox) CheckForChange(ctx context.Context, cursor string, timeout ti
 	}
 	headers := make(map[string]string)
 	headers["Content-Type"] = "application/json"
+	headers["Authorization"] = "Bearer " + db.AuthKey
 	data, err := db.client.Post(url, body, headers, &timeout)
 	if err != nil {
 		log.Error().Err(err).Str("component", "Dropbox").Msgf("cant poll for %s", cursor)
@@ -85,7 +87,7 @@ func (db *DropBox) DownloadFile(ctx context.Context, filePath string) ([]byte, e
 	path, _ := json.Marshal(body)
 	headers := make(map[string]string)
 	headers["Dropbox-API-Arg"] = string(path)
-
+	headers["Authorization"] = "Bearer " + db.AuthKey
 	data, err := db.client.Post(url, body, headers, nil)
 	if err != nil {
 		log.Error().Err(err).Str("component", "Dropbox").Msgf("cant download for %s", filePath)
@@ -127,6 +129,5 @@ func (db *DropBox) Connect(ctx context.Context) error {
 		Timeout: time.Second * 30,
 		Headers: make(map[string]string),
 	}
-	db.client.Headers["Authorization"] = "Bearer " + db.AuthKey
 	return nil
 }

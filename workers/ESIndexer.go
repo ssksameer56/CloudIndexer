@@ -32,6 +32,7 @@ func (esw *ESWorker) Run(wg *sync.WaitGroup) {
 	select {
 	case <-esw.context.Done():
 		log.Info().Str("component", "ElasticSearchIndexer").Msg("context done received. exiting es indexer loop")
+		return
 	case <-ticker.C:
 		log.Info().Str("component", "ElasticSearchIndexer").Msg("pinging. es indexer alive")
 	case data := <-esw.IndexerNotificationChannel:
@@ -46,12 +47,13 @@ func (esw *ESWorker) Run(wg *sync.WaitGroup) {
 						Msgf("couldnt index data %s", item.FilePath)
 				}
 			}(item)
-
 		}
 	}
 
 }
 
 func (esw *ESWorker) Stop() error {
+	log.Info().Str("component", "ElasticSearchIndexer").
+		Msgf("exiting es indexer loop")
 	return nil
 }

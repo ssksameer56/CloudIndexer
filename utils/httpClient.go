@@ -36,20 +36,21 @@ func (hc *HttpClient) Get(reqURL string) ([]byte, error) {
 
 	hc.Client.Timeout = hc.Timeout
 	response, err = hc.Client.Do(&request)
-	if err != nil || response.StatusCode != 200 {
+	if err != nil {
 		log.Error().Err(err).Msgf("failed to send request")
-		if response.StatusCode != 200 {
-			return []byte{}, errors.New("no 200 response")
-		} else {
-			return []byte{}, err
-		}
+		return []byte{}, err
 	}
 	defer response.Body.Close()
-	body, err := ioutil.ReadAll(response.Body)
+	rbody, err := ioutil.ReadAll(response.Body)
 	if err != nil {
-		return nil, err
+		log.Error().Err(err).Msgf("failed to read response")
+		return []byte{}, err
 	}
-	return body, nil
+	if response.StatusCode != 200 {
+		log.Error().Err(err).Msgf("failed to get response %s", rbody)
+		return []byte{}, errors.New(response.Status)
+	}
+	return rbody, nil
 }
 
 func (hc *HttpClient) Post(reqURL string, body interface{}, headers map[string]string, timeout *time.Duration) ([]byte, error) {
@@ -84,18 +85,23 @@ func (hc *HttpClient) Post(reqURL string, body interface{}, headers map[string]s
 	}
 	response, err = hc.Client.Do(request)
 
-	if err != nil || response.StatusCode != 200 {
+	if err != nil {
 		log.Error().Err(err).Msgf("failed to send request")
-		if response.StatusCode != 200 {
-			return []byte{}, errors.New(response.Status)
-		} else {
-			return []byte{}, err
-		}
+		return []byte{}, err
 	}
 	defer response.Body.Close()
-	body, err = ioutil.ReadAll(response.Body)
+	rbody, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		log.Error().Err(err).Msgf("failed to read response")
+		return []byte{}, err
+	}
+	if response.StatusCode != 200 {
+		log.Error().Msgf("failed to get response %s", rbody)
+		return []byte{}, errors.New(response.Status)
+	}
+
 	if err != nil {
 		return nil, err
 	}
-	return body.([]byte), nil
+	return rbody, nil
 }
