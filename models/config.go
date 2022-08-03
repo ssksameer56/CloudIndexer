@@ -5,4 +5,6 @@ type AppConfig struct {
 	ElasticSearchURL string `json:"ELASTICSEARCH_URL,omitempty"`
 	BufferSize       int    `json:"BUFFER_SIZE,omitempty"`
 	Folders          string `json:"FOLDERS_TO_WATCH"`
+	DropBoxAppKey    string `json:"DROPBOX_APP_KEY"`
+	DropBoxAppSecret string `json:"DROPBOX_APP_SECRET"`
 }
