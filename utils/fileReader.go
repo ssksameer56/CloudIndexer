@@ -14,6 +14,6 @@ func ReadFile(reader io.ReadCloser) ([]byte, error) {
 	   If you are unconditionally transferring bytes from an io.Reader to an io.Writer, you can just use io.Copy
 	*/
 	body := []byte{}
-	log.Info().Msgf("read a file %s with size %d", len(body))
+	log.Info().Msgf("read a file with size %d", len(body))
 	return body, nil
 }

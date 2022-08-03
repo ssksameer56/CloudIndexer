@@ -7,4 +7,6 @@ type AppConfig struct {
 	Folders          string `json:"FOLDERS_TO_WATCH"`
 	DropBoxAppKey    string `json:"DROPBOX_APP_KEY"`
 	DropBoxAppSecret string `json:"DROPBOX_APP_SECRET"`
+	RedirectURI      string `json:"REDIRECT_URI"`
+	AccessToken      string
 }

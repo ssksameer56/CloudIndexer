@@ -1,10 +1,13 @@
 package utils
 
 import (
-	"io"
+	"encoding/base64"
+	"fmt"
 	"testing"
 )
 
 func TestFileReader(t *testing.T) {
-	ReadFile(&io.PipeReader{})
+	auth := "alice:pa55word"
+	basicAuth := base64.StdEncoding.EncodeToString([]byte(auth))
+	fmt.Println(basicAuth)
 }
