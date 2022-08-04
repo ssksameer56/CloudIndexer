@@ -38,6 +38,7 @@ func LoadConfig() error {
 
 func GetAccessToken() (string, error) {
 	if Config.AccessToken == "" {
+		log.Info().Str("component", "Config").Msg("no access token. getting via dropbox")
 		getAccessToken()
 		return Config.AccessToken, errors.New(models.NoAccessToken)
 	} else {
