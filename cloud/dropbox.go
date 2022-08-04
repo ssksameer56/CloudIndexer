@@ -122,7 +122,7 @@ func (db *DropBox) GetPointerToPath(ctx context.Context, path string) (string, e
 }
 
 func (db *DropBox) Connect(ctx context.Context) error {
-	db.AuthKey = config.Config.DropboxKey
+	db.AuthKey, _ = config.GetAccessToken()
 	db.client = utils.HttpClient{
 		BaseURL: "",
 		Client:  &http.Client{},

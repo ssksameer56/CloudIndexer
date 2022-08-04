@@ -1,6 +1,7 @@
 package config
 
 import (
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -10,6 +11,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/rs/zerolog/log"
@@ -32,7 +34,11 @@ func LoadConfig() error {
 		return err
 	}
 	json.Unmarshal(raw, &Config)
-	getAccessToken()
+	err = getAccessToken()
+	if err != nil {
+		log.Panic().Err(err).Msg("Error occured while getting access token")
+		return err
+	}
 	return nil
 }
 
@@ -61,7 +67,7 @@ func OpenOAuth2TokenPopup() {
 	}
 }
 
-func getAccessToken() {
+func getAccessToken() error {
 	BaseURL := "https://api.dropbox.com/oauth2/token"
 	client := http.Client{}
 
@@ -83,6 +89,7 @@ func getAccessToken() {
 	resp, err := client.Do(r)
 	if err != nil {
 		log.Panic().Err(err).Msg("didnt get auth token")
+		return err
 	}
 	if resp.StatusCode != http.StatusOK {
 		log.Panic().Err(err).Msg("didnt get auth token 200 resp")
@@ -91,11 +98,26 @@ func getAccessToken() {
 	respData, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		log.Panic().Err(err).Msg("failed to read response")
+		return err
 	}
 	var response models.DropBoxOAuth2TokenResponse
 	err = json.Unmarshal(respData, &response)
 	if err != nil {
 		log.Err(err).Msgf("cant unmarshal access token")
+		return err
 	}
 	Config.AccessToken = response.AccessToken
+	return nil
+}
+
+func AccessTokenLoop(ctx context.Context, wg *sync.WaitGroup) {
+	defer wg.Done()
+	timer := time.NewTicker(time.Minute * 240)
+	select {
+	case <-ctx.Done():
+		log.Info().Str("component", "Server").Msg("exiting access token loop")
+		return
+	case <-timer.C:
+		getAccessToken()
+	}
 }

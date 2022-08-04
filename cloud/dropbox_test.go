@@ -18,8 +18,9 @@ func TestGetFiles(t *testing.T) {
 		log.Err(err).Msg("cant load config")
 		t.FailNow()
 	}
+	token, _ := config.GetAccessToken()
 	dropbox := DropBox{
-		AuthKey: config.Config.DropboxKey,
+		AuthKey: token,
 		Timeout: time.Minute,
 	}
 	err = dropbox.Connect(context.Background())
@@ -39,8 +40,9 @@ func TestDownload(t *testing.T) {
 		log.Err(err).Str("component", "Dropbox Test").Msg("cant load config")
 		t.FailNow()
 	}
+	token, _ := config.GetAccessToken()
 	dropbox := DropBox{
-		AuthKey: config.Config.DropboxKey,
+		AuthKey: token,
 		Timeout: time.Minute,
 	}
 	err = dropbox.Connect(context.Background())
@@ -59,8 +61,9 @@ func TestCursor(t *testing.T) {
 		log.Err(err).Str("component", "Dropbox Test").Msg("cant load config")
 		t.FailNow()
 	}
+	token, _ := config.GetAccessToken()
 	dropbox := DropBox{
-		AuthKey: config.Config.DropboxKey,
+		AuthKey: token,
 		Timeout: time.Minute,
 	}
 	err = dropbox.Connect(context.Background())
@@ -79,8 +82,9 @@ func TestPoll(t *testing.T) {
 		log.Err(err).Str("component", "Dropbox Test").Msg("cant load config")
 		t.FailNow()
 	}
+	token, _ := config.GetAccessToken()
 	dropbox := DropBox{
-		AuthKey: config.Config.DropboxKey,
+		AuthKey: token,
 		Timeout: time.Minute,
 	}
 	err = dropbox.Connect(context.Background())
