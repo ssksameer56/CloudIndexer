@@ -9,7 +9,12 @@ type APISearchRequest struct {
 	Keyword string `json:"keyword,omitempty"`
 }
 
-type DropboxOAuth2Request struct {
+type DropboxOAuth2RefreshRequest struct {
+	GrantType    string `json:"grant_type,omitempty"`
+	RefreshToken string `json:"refresh_token,omitempty"`
+}
+
+type DropboxOAuth2FreshRequest struct {
 	AuthorizationCode string `json:"code,omitempty"`
 	GrantType         string `json:"grant_type,omitempty"`
 	ClientID          string `json:"client_id,omitempty"`
@@ -20,7 +25,7 @@ type DropboxOAuth2Request struct {
 
 type DropBoxOAuth2TokenResponse struct {
 	AccessToken string `json:"access_token"`
-	ExpiresIn   string `json:"expires_in"`
+	ExpiresIn   int64  `json:"expires_in"`
 	TokenType   string `json:"token_type"`
 	Scope       string `json:"scope"`
 	AccountID   string `json:"account_id"`

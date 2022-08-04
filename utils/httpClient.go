@@ -32,7 +32,6 @@ func (hc *HttpClient) Get(reqURL string) ([]byte, error) {
 	for name, value := range hc.Headers {
 		request.Header.Add(name, value)
 	}
-	request.Header.Add("Content-Type", "application/json")
 
 	hc.Client.Timeout = hc.Timeout
 	response, err = hc.Client.Do(&request)

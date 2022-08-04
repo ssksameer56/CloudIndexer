@@ -26,8 +26,6 @@ func RunServer() {
 		})
 	})
 
-	router.GET("/redirect", processAuthorizationToken)
-
 	/*
 		router.GET("/search", sc.Search)
 		wg := sync.WaitGroup{}
