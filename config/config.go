@@ -113,7 +113,7 @@ func getAccessToken() error {
 
 func AccessTokenLoop(ctx context.Context, wg *sync.WaitGroup) {
 	defer wg.Done()
-	timer := time.NewTicker(time.Second * 10)
+	timer := time.NewTicker(time.Minute * 235) // refresh is 4hours
 	for {
 		select {
 		case <-ctx.Done():
