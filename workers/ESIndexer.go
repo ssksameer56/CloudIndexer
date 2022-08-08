@@ -29,27 +29,28 @@ func (esw *ESWorker) Init(ctx context.Context) error {
 func (esw *ESWorker) Run(wg *sync.WaitGroup) {
 	defer wg.Done()
 	ticker := time.NewTicker(time.Minute * 10)
-	select {
-	case <-esw.context.Done():
-		log.Info().Str("component", "ElasticSearchIndexer").Msg("context done received. exiting es indexer loop")
-		return
-	case <-ticker.C:
-		log.Info().Str("component", "ElasticSearchIndexer").Msg("pinging. es indexer alive")
-	case data := <-esw.IndexerNotificationChannel:
-		for _, item := range data.Data {
-			go func(item models.TextStoreModel) {
-				res, err := esw.Service.Index(esw.context, data.Folder, item)
-				if err != nil {
-					log.Err(err).Str("component", "ElasticSearchIndexer").Msgf("couldnt index data %s", item.FilePath)
-				}
-				if res.Result != models.ESIndexCreated || res.Result != models.ESIndexUpdated {
-					log.Err(errors.New("couldnt created")).Str("component", "ElasticSearchIndexer").
-						Msgf("couldnt index data %s", item.FilePath)
-				}
-			}(item)
+	for {
+		select {
+		case <-esw.context.Done():
+			log.Info().Str("component", "ElasticSearchIndexer").Msg("context done received. exiting es indexer loop")
+			return
+		case <-ticker.C:
+			log.Info().Str("component", "ElasticSearchIndexer").Msg("pinging. es indexer alive")
+		case data := <-esw.IndexerNotificationChannel:
+			for _, item := range data.Data {
+				go func(item models.TextStoreModel) {
+					res, err := esw.Service.Index(esw.context, data.Folder, item)
+					if err != nil {
+						log.Err(err).Str("component", "ElasticSearchIndexer").Msgf("couldnt index data %s", item.FilePath)
+					}
+					if res.Result != models.ESIndexCreated || res.Result != models.ESIndexUpdated {
+						log.Err(errors.New("couldnt created")).Str("component", "ElasticSearchIndexer").
+							Msgf("couldnt index data %s", item.FilePath)
+					}
+				}(item)
+			}
 		}
 	}
-
 }
 
 func (esw *ESWorker) Stop() error {

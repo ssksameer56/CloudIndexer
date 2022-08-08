@@ -107,12 +107,13 @@ func getAccessToken() error {
 		return err
 	}
 	Config.AccessToken = response.AccessToken
+	log.Info().Msg(Config.AccessToken)
 	return nil
 }
 
 func AccessTokenLoop(ctx context.Context, wg *sync.WaitGroup) {
 	defer wg.Done()
-	timer := time.NewTicker(time.Minute)
+	timer := time.NewTicker(time.Second * 10)
 	for {
 		select {
 		case <-ctx.Done():

@@ -90,12 +90,6 @@ func RunServer() {
 	wg.Add(1)
 	go config.AccessTokenLoop(_ctx, &wg)
 
-	go func(nChan chan models.CloudWatcherNotification) {
-		for data := range nChan {
-			log.Info().Msgf("change happened %s", data.Folder)
-		}
-	}(IndexerNotificationChannel)
-
 	sHandler := handlers.SearchHandler{
 		CloudProvider:   &dropbox,
 		ESSearchService: es,

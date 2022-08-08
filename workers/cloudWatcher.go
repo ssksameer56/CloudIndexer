@@ -19,6 +19,8 @@ type CloudWatcher struct {
 	currentPositions           map[string]string
 	IndexerNotificationChannel chan models.CloudWatcherNotification
 	isWaiting                  map[string]bool
+	positionMutex              sync.RWMutex
+	waitMutex                  sync.RWMutex
 }
 
 func (cw *CloudWatcher) Init(ctx context.Context) error {
@@ -59,44 +61,52 @@ func (cw *CloudWatcher) Run(wg *sync.WaitGroup) {
 	}
 
 	ticker := time.NewTicker(time.Minute * 10)
-	select {
-	case <-cw.context.Done():
-		log.Info().Str("component", "CloudWatcher").Msg("context done received. exiting cloud watcher loop")
-		close(cw.IndexerNotificationChannel)
-		return
-	case <-ticker.C:
-		log.Info().Str("component", "CloudWatcher").Msg("pinging. cloud watcher alive")
-	case changeNotif := <-cw.changeNotificationChannel:
-		if changeNotif.Change {
-			fileList, cursor, err := cw.CloudProvider.GetListofFiles(cw.context, changeNotif.Folder)
-			if err != nil {
-				log.Err(err).Str("component", "CloudWatcher").Msg("couldnt get latest files")
+	for {
+		select {
+		case <-cw.context.Done():
+			log.Info().Str("component", "CloudWatcher").Msg("context done received. exiting cloud watcher loop")
+			close(cw.IndexerNotificationChannel)
+			wnotifs.Wait()
+			return
+		case <-ticker.C:
+			log.Info().Str("component", "CloudWatcher").Msg("pinging. cloud watcher alive")
+		case changeNotif := <-cw.changeNotificationChannel:
+			if changeNotif.Change {
+				fileList, cursor, err := cw.CloudProvider.GetListofFiles(cw.context, changeNotif.Folder)
+				if err != nil {
+					log.Err(err).Str("component", "CloudWatcher").Msg("couldnt get latest files")
+				}
+				newData := make([]models.TextStoreModel, len(fileList))
+				for i, file := range fileList {
+					go func(i int, file models.FileData) {
+						data, err := cw.CloudProvider.DownloadFile(cw.context, file.Path)
+						if err != nil {
+							log.Err(err).Msgf("error when downloading %s", file.Path)
+						}
+						newData[i] = models.TextStoreModel{
+							Name:     file.Name,
+							FilePath: file.Path,
+							Text:     string(data),
+						}
+					}(i, file)
+				}
+
+				notif := models.CloudWatcherNotification{
+					Folder: changeNotif.Folder,
+					Cursor: cursor,
+					Data:   newData,
+				}
+				cw.waitMutex.Lock()
+				cw.positionMutex.Lock()
+				cw.currentPositions[notif.Folder] = cursor
+				cw.isWaiting[notif.Folder] = false
+				cw.waitMutex.Unlock()
+				cw.positionMutex.Unlock()
+				cw.IndexerNotificationChannel <- notif
+				log.Info().Msgf("NOTIF %v", changeNotif)
 			}
-			newData := make([]models.TextStoreModel, len(fileList))
-			for i, file := range fileList {
-				go func(i int, file models.FileData) {
-					data, err := cw.CloudProvider.DownloadFile(cw.context, file.Path)
-					if err != nil {
-						log.Err(err).Msgf("error when downloading %s", file.Path)
-					}
-					newData[i] = models.TextStoreModel{
-						Name:     file.Name,
-						FilePath: file.Path,
-						Text:     string(data),
-					}
-				}(i, file)
-			}
-			notif := models.CloudWatcherNotification{
-				Folder: changeNotif.Folder,
-				Cursor: cursor,
-				Data:   newData,
-			}
-			cw.currentPositions[notif.Folder] = cursor
-			cw.isWaiting[notif.Folder] = false
-			cw.IndexerNotificationChannel <- notif
 		}
 	}
-	wnotifs.Wait()
 }
 
 func (cw *CloudWatcher) WaitForNotifcation(wg *sync.WaitGroup, folder string) {
@@ -108,12 +118,17 @@ func (cw *CloudWatcher) WaitForNotifcation(wg *sync.WaitGroup, folder string) {
 			close(cw.changeNotificationChannel)
 			return
 		default:
-			if !cw.isWaiting[folder] {
+			cw.waitMutex.RLock()
+			flag := cw.isWaiting[folder]
+			cw.waitMutex.RUnlock()
+			if !flag {
 				go func() {
 					cw.CloudProvider.CheckForChange(cw.context, cw.currentPositions[folder], time.Minute*15,
 						cw.changeNotificationChannel, folder)
 				}()
+				cw.waitMutex.Lock()
 				cw.isWaiting[folder] = true
+				cw.waitMutex.Unlock()
 			}
 		}
 	}
