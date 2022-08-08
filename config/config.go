@@ -112,12 +112,19 @@ func getAccessToken() error {
 
 func AccessTokenLoop(ctx context.Context, wg *sync.WaitGroup) {
 	defer wg.Done()
-	timer := time.NewTicker(time.Minute * 240)
-	select {
-	case <-ctx.Done():
-		log.Info().Str("component", "Server").Msg("exiting access token loop")
-		return
-	case <-timer.C:
-		getAccessToken()
+	timer := time.NewTicker(time.Minute)
+	for {
+		select {
+		case <-ctx.Done():
+			log.Info().Str("component", "Server").Msg("exiting access token loop")
+			return
+		case <-timer.C:
+			err := getAccessToken()
+			if err != nil {
+				log.Err(err).Msg("error while renewing token")
+			} else {
+				log.Info().Msg("got new access token")
+			}
+		}
 	}
 }

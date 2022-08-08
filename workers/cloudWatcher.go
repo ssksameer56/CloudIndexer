@@ -18,6 +18,7 @@ type CloudWatcher struct {
 	changeNotificationChannel  chan models.FolderChangeNotification
 	currentPositions           map[string]string
 	IndexerNotificationChannel chan models.CloudWatcherNotification
+	isWaiting                  map[string]bool
 }
 
 func (cw *CloudWatcher) Init(ctx context.Context) error {
@@ -29,6 +30,8 @@ func (cw *CloudWatcher) Init(ctx context.Context) error {
 	}
 	cw.changeNotificationChannel = make(chan models.FolderChangeNotification, config.Config.BufferSize)
 	foldersToWatch := strings.Split(config.Config.Folders, ",")
+	cw.currentPositions = make(map[string]string)
+	cw.isWaiting = make(map[string]bool)
 	for _, folder := range foldersToWatch {
 		cursor, err := cw.CloudProvider.GetPointerToPath(cw.context, folder)
 		if err != nil {
@@ -36,8 +39,14 @@ func (cw *CloudWatcher) Init(ctx context.Context) error {
 			return err
 		}
 		cw.currentPositions[folder] = cursor
+		cw.isWaiting[folder] = false
 	}
-
+	err = cw.CloudProvider.Ping(cw.context)
+	if err != nil {
+		log.Err(err).Msg("couldnt ping dropbox")
+		return err
+	}
+	log.Info().Msg("started cloud worker")
 	return nil
 }
 func (cw *CloudWatcher) Run(wg *sync.WaitGroup) {
@@ -83,6 +92,7 @@ func (cw *CloudWatcher) Run(wg *sync.WaitGroup) {
 				Data:   newData,
 			}
 			cw.currentPositions[notif.Folder] = cursor
+			cw.isWaiting[notif.Folder] = false
 			cw.IndexerNotificationChannel <- notif
 		}
 	}
@@ -91,15 +101,23 @@ func (cw *CloudWatcher) Run(wg *sync.WaitGroup) {
 
 func (cw *CloudWatcher) WaitForNotifcation(wg *sync.WaitGroup, folder string) {
 	defer wg.Done()
-	select {
-	case <-cw.context.Done():
-		log.Info().Str("component", "CloudWatcher").Msg("wait for notification ended")
-		close(cw.changeNotificationChannel)
-		return
-	default:
-		cw.CloudProvider.CheckForChange(cw.context, cw.currentPositions[folder], time.Minute*15,
-			cw.changeNotificationChannel, folder)
+	for {
+		select {
+		case <-cw.context.Done():
+			log.Info().Str("component", "CloudWatcher").Msg("wait for notification ended")
+			close(cw.changeNotificationChannel)
+			return
+		default:
+			if !cw.isWaiting[folder] {
+				go func() {
+					cw.CloudProvider.CheckForChange(cw.context, cw.currentPositions[folder], time.Minute*15,
+						cw.changeNotificationChannel, folder)
+				}()
+				cw.isWaiting[folder] = true
+			}
+		}
 	}
+
 }
 
 func (cw *CloudWatcher) Stop() error {

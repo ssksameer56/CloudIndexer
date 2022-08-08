@@ -14,4 +14,5 @@ type Cloud interface {
 		notifcationChannel chan models.FolderChangeNotification, folder string)
 	GetPointerToPath(ctx context.Context, path string) (string, error)
 	DownloadFile(ctx context.Context, filePath string) ([]byte, error)
+	Ping(ctx context.Context) error
 }

@@ -28,7 +28,12 @@ func (db *DropBox) GetListofFiles(ctx context.Context, folderName string) ([]mod
 	}
 	headers := make(map[string]string)
 	headers["Content-Type"] = "application/json"
-	headers["Authorization"] = "Bearer " + db.AuthKey
+	token, err := config.GetAccessToken()
+	if err != nil {
+		log.Error().Err(err).Str("component", "Dropbox").Msgf("cant get token for")
+		return []models.FileData{}, "", err
+	}
+	headers["Authorization"] = "Bearer " + token
 	data, err := db.client.Post(url, body, headers, nil)
 	if err != nil {
 		log.Error().Err(err).Msgf("cant get files for %s", folderName)
@@ -58,7 +63,6 @@ func (db *DropBox) CheckForChange(ctx context.Context, cursor string, timeout ti
 	}
 	headers := make(map[string]string)
 	headers["Content-Type"] = "application/json"
-	headers["Authorization"] = "Bearer " + db.AuthKey
 	data, err := db.client.Post(url, body, headers, &timeout)
 	if err != nil {
 		log.Error().Err(err).Str("component", "Dropbox").Msgf("cant poll for %s", cursor)
@@ -87,7 +91,12 @@ func (db *DropBox) DownloadFile(ctx context.Context, filePath string) ([]byte, e
 	path, _ := json.Marshal(body)
 	headers := make(map[string]string)
 	headers["Dropbox-API-Arg"] = string(path)
-	headers["Authorization"] = "Bearer " + db.AuthKey
+	token, err := config.GetAccessToken()
+	if err != nil {
+		log.Error().Err(err).Str("component", "Dropbox").Msgf("cant get token for")
+		return []byte{}, err
+	}
+	headers["Authorization"] = "Bearer " + token
 	data, err := db.client.Post(url, body, headers, nil)
 	if err != nil {
 		log.Error().Err(err).Str("component", "Dropbox").Msgf("cant download for %s", filePath)
@@ -107,6 +116,12 @@ func (db *DropBox) GetPointerToPath(ctx context.Context, path string) (string, e
 
 	headers := make(map[string]string)
 	headers["Content-Type"] = "application/json"
+	token, err := config.GetAccessToken()
+	headers["Authorization"] = "Bearer " + token
+	if err != nil {
+		log.Error().Err(err).Str("component", "Dropbox").Msgf("cant get token for")
+		return "", err
+	}
 	data, err := db.client.Post(url, body, headers, nil)
 	if err != nil {
 		log.Error().Err(err).Str("component", "Dropbox").Msgf("cant get cursor for %s", path)
@@ -128,6 +143,28 @@ func (db *DropBox) Connect(ctx context.Context) error {
 		Client:  &http.Client{},
 		Timeout: time.Second * 30,
 		Headers: make(map[string]string),
+	}
+	return nil
+}
+
+func (db *DropBox) Ping(ctx context.Context) error {
+	_, cancel := context.WithCancel(ctx)
+	defer cancel()
+	url := "https://api.dropboxapi.com/2/check/user"
+	headers := make(map[string]string)
+	headers["Content-Type"] = "application/json"
+	token, err := config.GetAccessToken()
+	if err != nil {
+		log.Error().Err(err).Str("component", "Dropbox").Msgf("cant get token for")
+		return err
+	}
+	headers["Authorization"] = "Bearer " + token
+	body := make(map[string]interface{})
+	body["query"] = "foo"
+	_, err = db.client.Post(url, body, headers, nil)
+	if err != nil {
+		log.Error().Err(err).Str("component", "Dropbox").Msg("no connection established")
+		return err
 	}
 	return nil
 }

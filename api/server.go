@@ -49,6 +49,11 @@ func RunServer() {
 		log.Panic().Str("component", "Server").Msg("cant load dropbox client")
 	}
 
+	err = dropbox.Ping(_ctx)
+	if err != nil {
+		log.Panic().Str("component", "Server").Msg("cant connect to dropbox")
+	}
+
 	es := elasticservice.ElasticSearchService{}
 	err = es.Connect()
 	if err != nil {
@@ -69,19 +74,27 @@ func RunServer() {
 	}
 	go cw.Run(&wg)
 
-	esw := workers.ESWorker{
-		Service:                    es,
-		IndexerNotificationChannel: IndexerNotificationChannel,
-	}
-	wg.Add(1)
-	err = esw.Init(_ctx)
-	if err != nil {
-		log.Panic().Str("component", "Server").Msg("cant start cloud watcher")
-	}
-	esw.Run(&wg)
+	/*
+		esw := workers.ESWorker{
+			Service:                    es,
+			IndexerNotificationChannel: IndexerNotificationChannel,
+		}
+		wg.Add(1)
+		err = esw.Init(_ctx)
+		if err != nil {
+			log.Panic().Str("component", "Server").Msg("cant start cloud watcher")
+		}
+		esw.Run(&wg)
+	*/
 
 	wg.Add(1)
 	go config.AccessTokenLoop(_ctx, &wg)
+
+	go func(nChan chan models.CloudWatcherNotification) {
+		for data := range nChan {
+			log.Info().Msgf("change happened %s", data.Folder)
+		}
+	}(IndexerNotificationChannel)
 
 	sHandler := handlers.SearchHandler{
 		CloudProvider:   &dropbox,
