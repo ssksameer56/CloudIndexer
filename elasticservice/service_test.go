@@ -44,6 +44,15 @@ func (ets *ElasticSearchTestSuite) TestSearch() {
 	require.NotEmpty(ets.T(), res)
 }
 
+func (ets *ElasticSearchTestSuite) TestGet() {
+	res, _, err := ets.Service.checkIfExists(context.Background(), "accounts", models.TextStoreModel{
+		Name:     "dsd",
+		FilePath: "dwdw",
+	})
+	require.NoError(ets.T(), err, "error while indexing data to es")
+	require.NotEmpty(ets.T(), res)
+}
+
 func TestElasticSearchTestSuite(t *testing.T) {
 	suite.Run(t, new(ElasticSearchTestSuite))
 }

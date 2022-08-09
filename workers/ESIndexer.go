@@ -39,7 +39,7 @@ func (esw *ESWorker) Run(wg *sync.WaitGroup) {
 		case data := <-esw.IndexerNotificationChannel:
 			for _, item := range data.Data {
 				go func(item models.TextStoreModel) {
-					res, err := esw.Service.Index(esw.context, data.Folder, item)
+					res, err := esw.Service.Upsert(esw.context, data.Folder, item)
 					if err != nil {
 						log.Err(err).Str("component", "ElasticSearchIndexer").Msgf("couldnt index data %s", item.FilePath)
 					}

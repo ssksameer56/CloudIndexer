@@ -12,10 +12,10 @@ type ESErrorInfo struct {
 }
 
 type ESIndexResponse struct {
-	Index   string `json:"_index"`
-	ID      string `json:"_id"`
-	Version int    `json:"_version"`
-	Result  string
+	Index   string `json:"_index,omitempty"`
+	ID      string `json:"_id,omitempty"`
+	Version int    `json:"_version,omitempty"`
+	Result  string `json:"result,omitempty"`
 }
 
 type ESSearchResponse struct {
@@ -26,6 +26,15 @@ type ESSearchResponse struct {
 		}
 		Hits []*SearchHit
 	}
+}
+
+type ESGetResponse struct {
+	Index       string `json:"_index"`
+	ID          string `json:"_id"`
+	Version     int    `json:"_version"`
+	SeqNo       int    `json:"_seq_no"`
+	PrimaryTerm int    `json:"_primary_term"`
+	Found       bool   `json:"found"`
 }
 
 type SearchHit struct {

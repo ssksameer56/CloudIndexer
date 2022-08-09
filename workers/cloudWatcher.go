@@ -81,7 +81,7 @@ func (cw *CloudWatcher) Run(wg *sync.WaitGroup) {
 					go func(i int, file models.FileData) {
 						data, err := cw.CloudProvider.DownloadFile(cw.context, file.Path)
 						if err != nil {
-							log.Err(err).Msgf("error when downloading %s", file.Path)
+							log.Err(err).Str("component", "CloudWatcher").Msgf("error when downloading %s", file.Path)
 						}
 						newData[i] = models.TextStoreModel{
 							Name:     file.Name,
@@ -132,7 +132,6 @@ func (cw *CloudWatcher) WaitForNotifcation(wg *sync.WaitGroup, folder string) {
 			}
 		}
 	}
-
 }
 
 func (cw *CloudWatcher) Stop() error {

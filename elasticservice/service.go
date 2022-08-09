@@ -1,8 +1,10 @@
 package elasticservice
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 
@@ -99,4 +101,81 @@ func (es *ElasticSearchService) Index(ctx context.Context, index string, data mo
 		return models.ESIndexResponse{}, err
 	}
 	return ESResults, nil
+}
+
+func (es *ElasticSearchService) Update(ctx context.Context, index string, data models.TextStoreModel, docID string) (models.ESIndexResponse, error) {
+	cctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	dataJSON := esutil.NewJSONReader(data)
+	req := esapi.UpdateRequest{
+		Index:      index,
+		DocumentID: docID,
+		Body:       bytes.NewReader([]byte(fmt.Sprintf(`{"doc":%s}`, dataJSON))),
+		Refresh:    "true",
+	}
+	res, err := req.Do(cctx, es.Conn)
+	if err != nil {
+		log.Err(err).Str("component", "ElasticSearch").Msg("couldnt index to ES")
+		return models.ESIndexResponse{}, err
+	}
+	defer res.Body.Close()
+	resBody, err := ioutil.ReadAll(res.Body)
+
+	if res.StatusCode != http.StatusOK {
+		log.Err(err).Str("component", "ElasticSearch").Msg("couldnt get success response from ES")
+		return models.ESIndexResponse{}, err
+	}
+	var ESResults models.ESIndexResponse
+	if err != nil {
+		log.Err(err).Str("component", "ElasticSearch").Msg("couldnt read response body")
+		return models.ESIndexResponse{}, err
+	}
+	err = json.Unmarshal(resBody, &ESResults)
+	if err != nil {
+		log.Err(err).Str("component", "ElasticSearch").Msg("couldnt unmarshal res body")
+		return models.ESIndexResponse{}, err
+	}
+	return ESResults, nil
+}
+
+func (es *ElasticSearchService) Upsert(ctx context.Context, index string, data models.TextStoreModel) (models.ESIndexResponse, error) {
+	exists, id, err := es.checkIfExists(ctx, index, data)
+	if err != nil {
+		return models.ESIndexResponse{}, err
+	}
+	if exists {
+		return es.Update(ctx, index, data, id)
+	} else {
+		return es.Index(ctx, index, data)
+	}
+}
+
+func (es *ElasticSearchService) checkIfExists(ctx context.Context, index string, data models.TextStoreModel) (bool, string, error) {
+	cctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	req := esapi.GetRequest{
+		Index:      index,
+		DocumentID: "3FoRg4IBMh1uaqTv-7dc", //Hash(data),
+	}
+	res, err := req.Do(cctx, es.Conn)
+	if err != nil {
+		log.Err(err).Str("component", "ElasticSearch").Msg("couldnt index to ES")
+		return false, "", err
+	}
+	defer res.Body.Close()
+	resBody, err := ioutil.ReadAll(res.Body)
+
+	if res.StatusCode != http.StatusOK {
+		log.Err(err).Str("component", "ElasticSearch").Msg("couldnt get success response from ES")
+		return false, "", err
+	}
+	var ESResults models.ESGetResponse
+	err = json.Unmarshal(resBody, &ESResults)
+	if err != nil {
+		log.Err(err).Str("component", "ElasticSearch").Msg("couldnt unmarshal res body")
+		return false, "", err
+	}
+	return true, ESResults.ID, nil
 }
