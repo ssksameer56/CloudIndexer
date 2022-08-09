@@ -74,9 +74,10 @@ func (es *ElasticSearchService) Index(ctx context.Context, index string, data mo
 
 	dataJSON := esutil.NewJSONReader(data)
 	req := esapi.IndexRequest{
-		Index:   index,
-		Body:    dataJSON,
-		Refresh: "true",
+		Index:      index,
+		Body:       dataJSON,
+		Refresh:    "true",
+		DocumentID: Hash(data),
 	}
 	res, err := req.Do(cctx, es.Conn)
 	if err != nil {
@@ -157,7 +158,7 @@ func (es *ElasticSearchService) checkIfExists(ctx context.Context, index string,
 
 	req := esapi.GetRequest{
 		Index:      index,
-		DocumentID: "3FoRg4IBMh1uaqTv-7dc", //Hash(data),
+		DocumentID: Hash(data),
 	}
 	res, err := req.Do(cctx, es.Conn)
 	if err != nil {

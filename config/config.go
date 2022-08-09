@@ -10,7 +10,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
-	"os"
 	"strings"
 	"sync"
 	"time"
@@ -24,7 +23,6 @@ var Config models.AppConfig
 
 func LoadConfig() error {
 	path := ""
-	os.Chdir("../")
 	if flag.Lookup("test.v") == nil {
 		path = "config/config.json"
 	} else {
