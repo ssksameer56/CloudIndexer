@@ -16,6 +16,8 @@ import (
 	"github.com/ssksameer56/CloudIndexer/models"
 )
 
+var IndexToUse = "cloud-indexer"
+
 type ElasticSearchService struct {
 	Conn *elasticsearch.Client
 }
@@ -74,7 +76,7 @@ func (es *ElasticSearchService) Index(ctx context.Context, index string, data mo
 
 	dataJSON := esutil.NewJSONReader(data)
 	req := esapi.IndexRequest{
-		Index:      index,
+		Index:      IndexToUse,
 		Body:       dataJSON,
 		Refresh:    "true",
 		DocumentID: Hash(data),
@@ -93,7 +95,7 @@ func (es *ElasticSearchService) Index(ctx context.Context, index string, data mo
 	}
 	var ESResults models.ESIndexResponse
 	if err != nil {
-		log.Err(err).Str("component", "ElasticSearch").Msg("couldnt read response body")
+		log.Err(err).Str("component", "ElasticSearch").Msgf("%s", resBody)
 		return models.ESIndexResponse{}, err
 	}
 	err = json.Unmarshal(resBody, &ESResults)
@@ -108,9 +110,9 @@ func (es *ElasticSearchService) Update(ctx context.Context, index string, data m
 	cctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	dataJSON := esutil.NewJSONReader(data)
+	dataJSON, _ := json.Marshal(data)
 	req := esapi.UpdateRequest{
-		Index:      index,
+		Index:      IndexToUse,
 		DocumentID: docID,
 		Body:       bytes.NewReader([]byte(fmt.Sprintf(`{"doc":%s}`, dataJSON))),
 		Refresh:    "true",
@@ -124,7 +126,7 @@ func (es *ElasticSearchService) Update(ctx context.Context, index string, data m
 	resBody, err := ioutil.ReadAll(res.Body)
 
 	if res.StatusCode != http.StatusOK {
-		log.Err(err).Str("component", "ElasticSearch").Msg("couldnt get success response from ES")
+		log.Err(err).Str("component", "ElasticSearch").Msgf("%s", resBody)
 		return models.ESIndexResponse{}, err
 	}
 	var ESResults models.ESIndexResponse
@@ -157,7 +159,7 @@ func (es *ElasticSearchService) checkIfExists(ctx context.Context, index string,
 	defer cancel()
 
 	req := esapi.GetRequest{
-		Index:      index,
+		Index:      IndexToUse,
 		DocumentID: Hash(data),
 	}
 	res, err := req.Do(cctx, es.Conn)
@@ -168,8 +170,8 @@ func (es *ElasticSearchService) checkIfExists(ctx context.Context, index string,
 	defer res.Body.Close()
 	resBody, err := ioutil.ReadAll(res.Body)
 
-	if res.StatusCode != http.StatusOK {
-		log.Err(err).Str("component", "ElasticSearch").Msg("couldnt get success response from ES")
+	if res.StatusCode != http.StatusOK && res.StatusCode != http.StatusNotFound {
+		log.Err(err).Str("component", "ElasticSearch").Msgf("%s", resBody)
 		return false, "", err
 	}
 	var ESResults models.ESGetResponse
@@ -178,5 +180,5 @@ func (es *ElasticSearchService) checkIfExists(ctx context.Context, index string,
 		log.Err(err).Str("component", "ElasticSearch").Msg("couldnt unmarshal res body")
 		return false, "", err
 	}
-	return true, ESResults.ID, nil
+	return ESResults.Found, ESResults.ID, nil
 }

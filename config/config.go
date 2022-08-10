@@ -26,7 +26,7 @@ func LoadConfig() error {
 	if flag.Lookup("test.v") == nil {
 		path = "config/config.json"
 	} else {
-		path = "config/config.json"
+		path = "../config/config.json"
 	}
 	raw, err := ioutil.ReadFile(path)
 	if err != nil {

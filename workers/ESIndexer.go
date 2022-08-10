@@ -24,6 +24,7 @@ func (esw *ESWorker) Init(ctx context.Context) error {
 		log.Err(err).Str("component", "ElasticSearchIndexer").Msg("couldnt establish connection to ES")
 		return err
 	}
+	esw.context = ctx
 	return nil
 }
 func (esw *ESWorker) Run(wg *sync.WaitGroup) {
@@ -43,7 +44,8 @@ func (esw *ESWorker) Run(wg *sync.WaitGroup) {
 					if err != nil {
 						log.Err(err).Str("component", "ElasticSearchIndexer").Msgf("couldnt index data %s", item.FilePath)
 					}
-					if res.Result != models.ESIndexCreated || res.Result != models.ESIndexUpdated {
+					if res.Result != models.ESIndexCreated || res.Result != models.ESIndexUpdated ||
+						res.Result != models.ESIndexNoOperation {
 						log.Err(errors.New("couldnt created")).Str("component", "ElasticSearchIndexer").
 							Msgf("couldnt index data %s", item.FilePath)
 					}

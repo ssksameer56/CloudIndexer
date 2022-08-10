@@ -77,20 +77,23 @@ func (cw *CloudWatcher) Run(wg *sync.WaitGroup) {
 					log.Err(err).Str("component", "CloudWatcher").Msg("couldnt get latest files")
 				}
 				newData := make([]models.TextStoreModel, len(fileList))
+				wg := sync.WaitGroup{}
+				wg.Add(len(fileList))
 				for i, file := range fileList {
-					go func(i int, file models.FileData) {
+					go func(wg *sync.WaitGroup, i int, file models.FileData, dataArray *[]models.TextStoreModel) {
+						defer wg.Done()
 						data, err := cw.CloudProvider.DownloadFile(cw.context, file.Path)
 						if err != nil {
 							log.Err(err).Str("component", "CloudWatcher").Msgf("error when downloading %s", file.Path)
 						}
-						newData[i] = models.TextStoreModel{
+						(*dataArray)[i] = models.TextStoreModel{
 							Name:     file.Name,
 							FilePath: file.Path,
 							Text:     string(data),
 						}
-					}(i, file)
+					}(&wg, i, file, &newData)
 				}
-
+				wg.Wait()
 				notif := models.CloudWatcherNotification{
 					Folder: changeNotif.Folder,
 					Cursor: cursor,

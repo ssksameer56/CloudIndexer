@@ -39,7 +39,7 @@ func (ets *ElasticSearchTestSuite) TestIndex() {
 }
 
 func (ets *ElasticSearchTestSuite) TestSearch() {
-	res, err := ets.Service.Search(context.Background(), "cloud-indexer", "brown")
+	res, err := ets.Service.Search(context.Background(), "cloud-indexer", "aircraft from here will join")
 	require.NoError(ets.T(), err, "error while indexing data to es")
 	require.NotEmpty(ets.T(), res)
 }

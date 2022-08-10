@@ -51,7 +51,7 @@ type Match struct {
 	Text string `json:"text,omitempty"`
 }
 type Query struct {
-	Match Match `json:"match,omitempty"`
+	Match Match `json:"match_phrase,omitempty"`
 }
 type SearchRequest struct {
 	Query `json:"query,omitempty"`

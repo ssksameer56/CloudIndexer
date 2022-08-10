@@ -74,18 +74,16 @@ func RunServer() {
 	}
 	go cw.Run(&wg)
 
-	/*
-		esw := workers.ESWorker{
-			Service:                    es,
-			IndexerNotificationChannel: IndexerNotificationChannel,
-		}
-		wg.Add(1)
-		err = esw.Init(_ctx)
-		if err != nil {
-			log.Panic().Str("component", "Server").Msg("cant start cloud watcher")
-		}
-		esw.Run(&wg)
-	*/
+	esw := workers.ESWorker{
+		Service:                    es,
+		IndexerNotificationChannel: IndexerNotificationChannel,
+	}
+	wg.Add(1)
+	err = esw.Init(_ctx)
+	if err != nil {
+		log.Panic().Str("component", "Server").Msg("cant start cloud watcher")
+	}
+	esw.Run(&wg)
 
 	wg.Add(1)
 	go config.AccessTokenLoop(_ctx, &wg)
