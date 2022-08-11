@@ -6,7 +6,7 @@ type APISearchResponse struct {
 }
 
 type APISearchRequest struct {
-	Keyword string `json:"keyword,omitempty"`
+	Keyword string `form:"keyword,omitempty"`
 }
 
 type DropboxOAuth2RefreshRequest struct {

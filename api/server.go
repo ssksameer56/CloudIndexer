@@ -83,7 +83,7 @@ func RunServer() {
 	if err != nil {
 		log.Panic().Str("component", "Server").Msg("cant start cloud watcher")
 	}
-	esw.Run(&wg)
+	go esw.Run(&wg)
 
 	wg.Add(1)
 	go config.AccessTokenLoop(_ctx, &wg)
@@ -115,7 +115,7 @@ func RunServer() {
 
 	// Restore default behavior on the interrupt signal and notify user of shutdown.
 	stop()
-	//wg.Wait()
+	wg.Wait()
 	srv.Shutdown(_ctx)
 	log.Info().Msg("stopped server and all routines")
 }

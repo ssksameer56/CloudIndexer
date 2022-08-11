@@ -15,7 +15,7 @@ type SearchController struct {
 
 func (sc *SearchController) Search(c *gin.Context) {
 	var request models.APISearchRequest
-	if err := c.ShouldBindQuery(&request); err != nil {
+	if err := c.BindQuery(&request); err != nil {
 		log.Err(err).Str("component", "SearchController").Msgf("cant bind request for search")
 		c.JSON(http.StatusBadRequest, gin.H{})
 	}
